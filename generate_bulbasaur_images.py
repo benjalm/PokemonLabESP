@@ -1,7 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 import random
-import textwrap
 
 # ---------------- CONFIG ----------------
 WIDTH, HEIGHT = 1080, 1920
@@ -9,7 +8,7 @@ BOTTOM_MARGIN = 6
 PANEL_HEIGHT = 520
 PANEL_Y_OFFSET = -32
 
-POKEMON_Y_OFFSET = 30
+POKEMON_Y_OFFSET = 40
 
 FONT_PATH = "fonts/Montserrat-Regular.ttf"
 NAME_FONT_PATH = "fonts/Roboto-VariableFont_wdth,wght.ttf"
@@ -55,12 +54,36 @@ STAT_BG_GRAY = (180, 180, 180, 77)
 
 # ---------------- DATA ----------------
 POKEMONS = {
-    "bulbasaur": {"type": "Grass, Poison", "stats": [45, 49, 49, 65, 65, 45]},
-    "charmander": {"type": "Fire", "stats": [39, 52, 43, 60, 50, 65]},
-    "squirtle": {"type": "Water", "stats": [44, 48, 65, 50, 64, 43]},
-    "pikachu": {"type": "Electric", "stats": [35, 55, 40, 50, 50, 90]},
-    "gastly": {"type": "Ghost, Poison", "stats": [30, 35, 30, 100, 35, 80]},
-    "machop": {"type": "Fighting", "stats": [70, 80, 50, 35, 35, 35]},
+    "bulbasaur": {
+        "type": "Grass, Poison",
+        "stats": [45, 49, 49, 65, 65, 45],
+        "description": "Bulbasaur tiene una semilla en su espalda que crece con el tiempo y absorbe nutrientes de la luz solar."
+    },
+    "charmander": {
+        "type": "Fire",
+        "stats": [39, 52, 43, 60, 50, 65],
+        "description": "Charmander tiene la llama en su cola que refleja su vitalidad y estado de ánimo."
+    },
+    "squirtle": {
+        "type": "Water",
+        "stats": [44, 48, 65, 50, 64, 43],
+        "description": "Squirtle protege su cuerpo con un caparazón duro y lanza chorros de agua con gran precisión."
+    },
+    "pikachu": {
+        "type": "Electric",
+        "stats": [35, 55, 40, 50, 50, 90],
+        "description": "Pikachu almacena electricidad en sus mejillas y la libera en potentes ataques eléctricos."
+    },
+    "gastly": {
+        "type": "Ghost, Poison",
+        "stats": [30, 35, 30, 100, 35, 80],
+        "description": "Gastly es un Pokémon intangible que flota y se oculta en la oscuridad para sorprender a sus presas."
+    },
+    "machop": {
+        "type": "Fighting",
+        "stats": [70, 80, 50, 35, 35, 35],
+        "description": "Machop entrena constantemente para aumentar su fuerza y puede levantar objetos muy pesados."
+    },
 }
 
 # ---------------- FONTS ----------------
@@ -68,12 +91,10 @@ font_title = ImageFont.truetype(FONT_PATH, 54)
 font_total = ImageFont.truetype(FONT_PATH, 54)
 font_value = ImageFont.truetype(FONT_PATH, 43)
 font_label = ImageFont.truetype(FONT_PATH, 38)
-
-# ↓ Cambio 2: font de descripción 5 px más chico (43 → 38)
 font_description = ImageFont.truetype(FONT_PATH, 38)
 
 BASE_NAME_SIZE = 150
-TOP_NAME_MARGIN = 40
+TOP_NAME_MARGIN = 60
 MIN_SIDE_MARGIN = 10
 
 LINE_MARGIN_X = 70
@@ -81,16 +102,8 @@ LINE_THICKNESS = 5
 LINE_GAP_FROM_NAME = 20
 TYPE_TEXT_GAP = 20
 
-# ↓ Cambio 3: márgenes laterales 80 px
-DESCRIPTION_MARGIN = 60
-
-DESCRIPTION_GAP_FROM_POKEMON = 20
-
-DESCRIPTION_TEXT = (
-    "Un Pokémon conocido por su equilibrio entre fuerza y estrategia. "
-    "Su naturaleza lo convierte en una opción versátil tanto en combate "
-    "como en exploración."
-)
+DESCRIPTION_MARGIN = 70
+DESCRIPTION_GAP_FROM_POKEMON = -20
 
 # ---------------- MAIN ----------------
 selected = random.sample(list(POKEMONS.items()), 6)
@@ -147,25 +160,48 @@ for i, (name, data) in enumerate(selected):
     size_p = int(WIDTH * 0.7668)
     sprite = sprite.resize((size_p, size_p), Image.LANCZOS)
 
-    pokemon_y = int(HEIGHT * 0.15) + 10 + POKEMON_Y_OFFSET
+    # Pokémon 20 px más arriba
+    pokemon_y = int(HEIGHT * 0.15) + 80 + POKEMON_Y_OFFSET - 20
     base.paste(sprite, ((WIDTH - size_p) // 2, pokemon_y), sprite)
 
     # ---------- Descripción ----------
-    # ↓ Cambio 1: empezar 10 px más arriba
-    desc_y = pokemon_y + size_p + DESCRIPTION_GAP_FROM_POKEMON - 40
+    desc_y = pokemon_y + size_p + DESCRIPTION_GAP_FROM_POKEMON
+    left_margin = 70
+    right_margin = 70
+    max_width = WIDTH - left_margin - right_margin
+    description_text = data["description"]
 
-    wrapped = textwrap.fill(DESCRIPTION_TEXT, width=60)
+    # Función para limitar a 3 líneas
+    def wrap_text_limited(text, font, max_width, max_lines=3):
+        words = text.split()
+        lines = []
+        line = ""
+        for word in words:
+            test_line = line + (" " if line else "") + word
+            if draw.textlength(test_line, font) <= max_width:
+                line = test_line
+            else:
+                if line:
+                    lines.append(line)
+                line = word
+            if len(lines) == max_lines:
+                break
+        if line and len(lines) < max_lines:
+            lines.append(line)
+        return lines
 
-    draw.multiline_text(
-        (DESCRIPTION_MARGIN, desc_y),
-        wrapped,
-        font=font_description,
-        fill="white",
-        align="left",
-        spacing=6,
-        stroke_width=2,
-        stroke_fill="black"
-    )
+    lines = wrap_text_limited(description_text, font_description, max_width, max_lines=3)
+    line_height = font_description.getbbox("Ay")[3] + 6
+
+    for idx, line in enumerate(lines):
+        draw.text(
+            (left_margin, desc_y + idx * line_height),
+            line,
+            font=font_description,
+            fill="white",
+            stroke_width=2,
+            stroke_fill="black"
+        )
 
     # ---------- Panel Stats ----------
     panel_bottom = HEIGHT - BOTTOM_MARGIN - 4 + PANEL_Y_OFFSET
@@ -192,13 +228,12 @@ for i, (name, data) in enumerate(selected):
     max_stat = 120
     num_bars = len(data["stats"])
 
-    usable_width = (panel_right - panel_left) - 40  # 20 px por lado
+    usable_width = (panel_right - panel_left) - 40
     total_bars_width = num_bars * bar_width + (num_bars - 1) * gap
     container_left = panel_left + 20 + (usable_width - total_bars_width) // 2
 
     for idx, v in enumerate(data["stats"]):
         x = int(container_left + idx * (bar_width + gap))
-
         o_draw.rectangle([x, bars_top, x + bar_width, bars_bottom], fill=STAT_BG_GRAY)
 
         h = int((v / max_stat) * bars_height)
@@ -231,4 +266,4 @@ for i, (name, data) in enumerate(selected):
     final = Image.alpha_composite(base, overlay)
     final.save(os.path.join(OUTPUT_DIR, f"sample_{i+1}_{name}.png"))
 
-print("✅ Descripción ajustada: posición, tamaño y márgenes.")
+print("✅ Generadas 6 imágenes de Pokémon con descripciones individuales en máximo 3 líneas.")
