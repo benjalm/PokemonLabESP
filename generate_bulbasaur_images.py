@@ -147,12 +147,12 @@ for i, (name, data) in enumerate(selected):
     size_p = int(WIDTH * 0.7668)
     sprite = sprite.resize((size_p, size_p), Image.LANCZOS)
 
-    pokemon_y = int(HEIGHT * 0.15) + 80 + POKEMON_Y_OFFSET
+    pokemon_y = int(HEIGHT * 0.15) + 10 + POKEMON_Y_OFFSET
     base.paste(sprite, ((WIDTH - size_p) // 2, pokemon_y), sprite)
 
     # ---------- Descripción ----------
     # ↓ Cambio 1: empezar 10 px más arriba
-    desc_y = pokemon_y + size_p + DESCRIPTION_GAP_FROM_POKEMON - 10
+    desc_y = pokemon_y + size_p + DESCRIPTION_GAP_FROM_POKEMON - 40
 
     wrapped = textwrap.fill(DESCRIPTION_TEXT, width=60)
 
